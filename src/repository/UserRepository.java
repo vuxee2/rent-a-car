@@ -81,6 +81,7 @@ public class UserRepository {
                 case CLIENT -> {
                     Client client = new Client();
                     fillBase(client, row);
+                    System.out.println(row[14]);
                     client.setLicenseIssueDate(DateUtil.parse(row[14]));
                     if (row.length > 15 && !row[15].isBlank()) {
                         client.setCategory(ClientCategory.valueOf(row[15]));
