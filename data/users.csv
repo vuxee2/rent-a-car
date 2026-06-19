@@ -1,0 +1,10 @@
+1;Marko;Markovic;MALE;1985-03-12;0641234567;Bulevar oslobodjenja 1, Novi Sad;admin;admin123;ADMINISTRATOR;MASTER;5;80000;1.5;;
+2;Jovana;Jovanovic;FEMALE;1979-11-02;0642223344;Vojvode Stepe 10, Beograd;admin2;admin123;ADMINISTRATOR;PHD;9;90000;1.8;;
+3;Pera;Peric;MALE;1990-07-20;0642345678;Ulica heroja 2, Novi Sad;agent;agent123;AGENT;BACHELOR;3;65000;1.2;;
+4;Steva;Stevic;MALE;1988-02-14;0643334455;Cara Dusana 5, Beograd;sagent;agent123;AGENT;BACHELOR;6;65000;1.3;;
+5;Sava;Savic;FEMALE;1995-09-09;0644445566;Bate Brkica 8, Subotica;agent3;agent123;AGENT;HIGH_SCHOOL;1;60000;1.0;;
+6;Ana;Anic;FEMALE;1998-01-15;0643456789;Ulica 3, Novi Sad;klijent;klijent123;CLIENT;;;;2021-05-10;STUDENT
+7;Nikola;Nikolic;MALE;1965-06-25;0645556677;Knez Mihailova 12, Beograd;nikola.n;klijent123;CLIENT;;;;2010-03-01;PENZIONER
+8;Milica;Milic;FEMALE;1992-12-30;0646667788;Bulevar kralja Aleksandra 50, Beograd;milica.m;klijent123;CLIENT;;;;2023-08-15;
+9;TehnoSoft DOO;Predstavnik;OTHER;1980-01-01;0647778899;Industrijska zona bb, Novi Sad;tehnosoft;klijent123;CLIENT;;;;2015-04-20;COMPANY
+10;Dusan;Dusanovic;MALE;2003-04-18;0648889900;Cetinjska 22, Nis;dusan.d;klijent123;CLIENT;;;;2024-01-10;STUDENT
