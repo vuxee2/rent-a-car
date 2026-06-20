@@ -5,6 +5,7 @@ import model.Reservation;
 import model.Vehicle;
 import model.enums.ReservationStatus;
 import repository.ReservationRepository;
+import util.AppContext;
 import util.DateUtil;
 
 import java.time.LocalDate;
@@ -25,11 +26,6 @@ public class ReservationManager {
         this.vehicleManager = vehicleManager;
     }
 
-    /**
-     * Kreira zahtev za rezervaciju. Baca IllegalStateException sa porukom
-     * objasnjenja ako neko od poslovnih pravila nije zadovoljeno — GUI sloj
-     * hvata ovaj izuzetak i prikazuje poruku korisniku.
-     */
     public Reservation createReservation(Client client, String vehicleModelId,
                                           LocalDate startDate, LocalDate endDate,
                                           String additionalServiceIds, double totalPrice) {
@@ -54,6 +50,11 @@ public class ReservationManager {
             throw new IllegalStateException("Nema slobodnih vozila ovog modela u izabranom periodu.");
         }
 
+        if (!AppContext.getInstance().getSubscriptionManager().hasActiveSubscription(client.getId()))
+        {
+            throw new IllegalStateException("Niste pretplaćeni na servis.");
+        }
+
         Reservation reservation = new Reservation(
                 UUID.randomUUID().toString(),
                 client.getId(),
@@ -71,10 +72,7 @@ public class ReservationManager {
         return reservation;
     }
 
-    /**
-     * Postoji bar jedan primerak modela koji nije zauzet drugom aktivnom
-     * (PENDING ili CONFIRMED) rezervacijom u trazenom periodu.
-     */
+    /** Da li postoji bar jedan dostupan model. */
     public boolean isModelAvailableInPeriod(String modelId, LocalDate start, LocalDate end) {
         List<Vehicle> vehiclesOfModel = vehicleManager.getVehiclesForModel(modelId);
         if (vehiclesOfModel.isEmpty()) return false;
@@ -89,11 +87,7 @@ public class ReservationManager {
         return vehiclesOfModel.size() > activeReservations.size();
     }
 
-    /**
-     * Klijent ne sme da napravi novu rezervaciju u naredna 24h nakon sto je
-     * otkazao rezervaciju (status CANCELLED), niti nakon sto se nije pojavio
-     * (sto se takodje markira kao CANCELLED).
-     */
+    /** Proverava da li je klijent napravio rezervaciju u proteklih 24h. */
     public boolean canClientReserveNow(String clientId) {
         return reservationRepository.findByClientId(clientId).stream()
                 .filter(r -> r.getStatus() == ReservationStatus.CANCELLED)

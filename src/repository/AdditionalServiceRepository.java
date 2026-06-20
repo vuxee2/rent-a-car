@@ -10,9 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * Format reda: id;type;price;chargeType
- */
+/** Format reda: id;type;price;chargeType */
 public class AdditionalServiceRepository {
 
     private static final String FILE_PATH = "data/additional_services.csv";

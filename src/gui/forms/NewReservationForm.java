@@ -7,7 +7,6 @@ import model.Client;
 import model.VehicleCategory;
 import model.VehicleModel;
 import model.enums.ChargeType;
-import model.enums.ServiceType;
 import util.AppContext;
 import util.DateUtil;
 
@@ -23,6 +22,7 @@ import java.util.stream.Collectors;
 public class NewReservationForm extends JPanel {
 
     private final Client client;
+    private Boolean hasDiscount;
     private final VehicleManager vehicleManager;
     private final ReservationManager reservationManager;
     private final List<AdditionalService> allServices;
@@ -42,6 +42,7 @@ public class NewReservationForm extends JPanel {
         this.vehicleManager = AppContext.getInstance().getVehicleManager();
         this.reservationManager = AppContext.getInstance().getReservationManager();
         this.allServices = AppContext.getInstance().getAdditionalServiceRepository().findAll();
+        this.hasDiscount = client.getCategory() == null ? false : true;
 
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
@@ -158,8 +159,7 @@ public class NewReservationForm extends JPanel {
                 checkboxPanel.add(checkBox);
             }
         }
-
-        estimatedPriceLabel = new JLabel("Procenjena ukupna cena: —");
+        estimatedPriceLabel = new JLabel("");                                
         estimatedPriceLabel.setFont(estimatedPriceLabel.getFont().deriveFont(Font.BOLD, 14f));
 
         JButton reserveButton = new JButton("Pošalji zahtev za rezervaciju");
@@ -216,13 +216,15 @@ public class NewReservationForm extends JPanel {
         LocalDate start = parseDateSafely(startDateField.getText());
         LocalDate end = parseDateSafely(endDateField.getText());
 
+        String priceText = !hasDiscount ? "Ukupna cena: " : "Ukupna cena (sa 10% popusta): ";
+
         if (selectedRow < 0 || start == null || end == null || end.isBefore(start)) {
-            estimatedPriceLabel.setText("Procenjena ukupna cena: —");
+            estimatedPriceLabel.setText(priceText);
             return;
         }
 
         double total = calculateTotalPrice(selectedRow, start, end);
-        estimatedPriceLabel.setText(String.format("Procenjena ukupna cena: %.2f RSD", total));
+        estimatedPriceLabel.setText(priceText + total + "RSD");
     }
 
     private double calculateTotalPrice(int modelRow, LocalDate start, LocalDate end) {
@@ -244,6 +246,10 @@ public class NewReservationForm extends JPanel {
             } else {
                 total += service.getPrice();
             }
+        }
+
+        if (hasDiscount){
+            total = total - total / 10;
         }
 
         return total;

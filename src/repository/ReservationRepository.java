@@ -10,10 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * Format reda:
- * id;clientId;vehicleModelId;startDate;endDate;status;totalPrice;additionalServiceIds;createdAt;agentId
- */
+/** Format reda: id;clientId;vehicleModelId;startDate;endDate;status;totalPrice;additionalServiceIds;createdAt;agentId */
 public class ReservationRepository {
 
     private static final String FILE_PATH = "data/reservations.csv";
@@ -71,7 +68,7 @@ public class ReservationRepository {
     public void delete(String id) {
         List<String[]> rows = findAll().stream()
                 .filter(r -> !r.getId().equals(id))
-                .map(this::toRow)
+                .map(this::toRow) // (r -> this.toRow(r))
                 .collect(Collectors.toList());
         CSVParser.writeAll(FILE_PATH, rows, DELIMITER);
     }

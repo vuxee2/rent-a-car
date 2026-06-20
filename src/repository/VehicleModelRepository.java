@@ -8,9 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * Format reda: id;manufacturer;name;categoryId
- */
+/** Format reda: id;manufacturer;name;categoryId */
 public class VehicleModelRepository {
 
     private static final String FILE_PATH = "data/vehicle_models.csv";

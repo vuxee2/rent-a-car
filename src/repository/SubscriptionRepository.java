@@ -10,9 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * Format reda: id;clientId;startDate;endDate;status;paidAmount;agentId
- */
+/** Format reda: id;clientId;startDate;endDate;status;paidAmount;agentId */
 public class SubscriptionRepository {
 
     private static final String FILE_PATH = "data/subscriptions.csv";

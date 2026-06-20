@@ -9,9 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * Format reda: id;type;dailyPrice
- */
+/** Format reda: id;type;dailyPrice */
 public class VehicleCategoryRepository {
 
     private static final String FILE_PATH = "data/vehicle_categories.csv";

@@ -5,3 +5,4 @@ public enum ClientCategory {
     PENSIONER,
     COMPANY
 }
+

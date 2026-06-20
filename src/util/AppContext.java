@@ -55,6 +55,7 @@ public class AppContext {
         reservationManager.expireOverdueReservations();
     }
 
+    // Samo jedan thread moze da executuje
     public static synchronized AppContext getInstance() {
         if (instance == null) {
             instance = new AppContext();

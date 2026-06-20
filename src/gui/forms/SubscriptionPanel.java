@@ -13,11 +13,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Tab "Moja pretplata" — prikazuje trenutni status pretplate klijenta i
- * istoriju svih zahteva, sa dugmetom za podnosenje zahteva za (obnovu)
- * pretplate. Odobravanje zahteva vrsi agent.
- */
 public class SubscriptionPanel extends JPanel {
 
     private final Client client;
