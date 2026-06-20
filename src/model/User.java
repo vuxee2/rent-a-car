@@ -40,8 +40,6 @@ public abstract class User {
         return firstName + " " + lastName;
     }
 
-    // --- Getteri i setteri ---
-
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
