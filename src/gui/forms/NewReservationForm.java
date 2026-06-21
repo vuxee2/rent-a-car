@@ -22,10 +22,11 @@ import java.util.stream.Collectors;
 public class NewReservationForm extends JPanel {
 
     private final Client client;
-    private Boolean hasDiscount;
+    private double discount;
     private final VehicleManager vehicleManager;
     private final ReservationManager reservationManager;
     private final List<AdditionalService> allServices;
+    private int additionalDays;
 
     private JTextField searchField;
     private JComboBox<CategoryItem> categoryCombo;
@@ -42,7 +43,8 @@ public class NewReservationForm extends JPanel {
         this.vehicleManager = AppContext.getInstance().getVehicleManager();
         this.reservationManager = AppContext.getInstance().getReservationManager();
         this.allServices = AppContext.getInstance().getAdditionalServiceRepository().findAll();
-        this.hasDiscount = client.getCategory() == null ? false : true;
+        this.discount = getDiscount();
+        this.additionalDays = 0;
 
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
@@ -52,6 +54,19 @@ public class NewReservationForm extends JPanel {
         add(buildServicesPanel(), BorderLayout.SOUTH);
 
         runSearch();
+    }
+
+    private double getDiscount() {
+        switch (client.getCategory()) {
+            case STUDENT:
+                return AppContext.getInstance().getPricelistManager().getActivePricelist().get().getStudentDiscountPercent();
+            case PENSIONER:
+                return AppContext.getInstance().getPricelistManager().getActivePricelist().get().getPensionerDiscountPercent();
+            case COMPANY:
+                return AppContext.getInstance().getPricelistManager().getActivePricelist().get().getCompanyDiscountPercent();
+            default:
+                return 0;
+        }
     }
 
     private JPanel buildFilterPanel() {
@@ -70,7 +85,9 @@ public class NewReservationForm extends JPanel {
         }
 
         startDateField = new JTextField(LocalDate.now().plusDays(1).toString(), 10);
-        endDateField = new JTextField(LocalDate.now().plusDays(4).toString(), 10);
+
+        int defaultRentalDays = AppContext.getInstance().getPricelistManager().getDefaultRentalDays();
+        endDateField = new JTextField(LocalDate.now().plusDays(defaultRentalDays).toString(), 10);
         endDateField.setEditable(false);
 
         JButton searchButton = new JButton("Pretraži");
@@ -179,7 +196,8 @@ public class NewReservationForm extends JPanel {
     }
 
     private void runSearch() {
-        LocalDate endDate = LocalDate.parse(startDateField.getText()).plusDays(3);
+        int defaultRentalDays = AppContext.getInstance().getPricelistManager().getDefaultRentalDays();
+        LocalDate endDate = LocalDate.parse(startDateField.getText()).plusDays(defaultRentalDays);
         endDateField.setText(endDate.toString());
 
         String query = searchField.getText().trim();
@@ -216,7 +234,9 @@ public class NewReservationForm extends JPanel {
         LocalDate start = parseDateSafely(startDateField.getText());
         LocalDate end = parseDateSafely(endDateField.getText());
 
-        String priceText = !hasDiscount ? "Ukupna cena: " : "Ukupna cena (sa 10% popusta): ";
+        String priceText = discount == 0
+        ? "Ukupna cena: "
+        : "Ukupna cena (sa " + discount + "% popusta): ";
 
         if (selectedRow < 0 || start == null || end == null || end.isBefore(start)) {
             estimatedPriceLabel.setText(priceText);
@@ -230,7 +250,7 @@ public class NewReservationForm extends JPanel {
     private double calculateTotalPrice(int modelRow, LocalDate start, LocalDate end) {
         VehicleModel model = currentResults.get(modelRow);
         VehicleCategory cat = vehicleManager.getCategoryById(model.getCategoryId()).orElse(null);
-        long days = ChronoUnit.DAYS.between(start, end) + 1;
+        long days = ChronoUnit.DAYS.between(start, end);
 
         double total = (cat != null ? cat.getDailyPrice() : 0) * days;
 
@@ -242,14 +262,15 @@ public class NewReservationForm extends JPanel {
                 if (spinner != null) {
                     int daysSpinner = (int) spinner.getValue();
                     total += service.getPrice() * daysSpinner;
+                    additionalDays = daysSpinner;
                 }
             } else {
                 total += service.getPrice();
             }
         }
 
-        if (hasDiscount){
-            total = total - total / 10;
+        if (discount != 0){
+            total -= discount / 100 * total;
         }
 
         return total;
@@ -271,6 +292,7 @@ public class NewReservationForm extends JPanel {
 
         LocalDate start = parseDateSafely(startDateField.getText());
         LocalDate end = parseDateSafely(endDateField.getText());
+        
 
         if (start == null || end == null) {
             JOptionPane.showMessageDialog(this, "Datumi moraju biti u formatu yyyy-MM-dd.", "Greška", JOptionPane.ERROR_MESSAGE);
@@ -279,6 +301,9 @@ public class NewReservationForm extends JPanel {
 
         VehicleModel selectedModel = currentResults.get(selectedRow);
         double totalPrice = calculateTotalPrice(selectedRow, start, end);
+
+        end = end.plusDays(additionalDays);
+
         String serviceIds = getSelectedServiceIds();
 
         try {

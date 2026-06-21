@@ -82,4 +82,12 @@ public class VehicleManager {
     public void addVehicleCategory(VehicleCategory category) {
         vehicleCategoryRepository.save(category);
     }
+
+    public void setVehicleMileage(String id, int mileage) {
+        Optional<Vehicle> vehicle = vehicleRepository.findById(id);
+        if(vehicle.isPresent()) {
+            vehicle.get().setMileage(mileage);
+            vehicleRepository.save(vehicle.get());
+        }
+    }
 }

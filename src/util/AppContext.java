@@ -1,10 +1,15 @@
 package util;
 
+import manager.PricelistManager;
+import manager.RentalManager;
+import manager.ReportManager;
 import manager.ReservationManager;
 import manager.SubscriptionManager;
 import manager.UserManager;
 import manager.VehicleManager;
 import repository.AdditionalServiceRepository;
+import repository.PricelistRepository;
+import repository.RentalRepository;
 import repository.ReservationRepository;
 import repository.SubscriptionRepository;
 import repository.UserRepository;
@@ -25,12 +30,17 @@ public class AppContext {
     private final ReservationRepository reservationRepository;
     private final AdditionalServiceRepository additionalServiceRepository;
     private final SubscriptionRepository subscriptionRepository;
+    private final RentalRepository rentalRepository;
+    private final PricelistRepository pricelistRepository;
 
     // --- Managers ---
     private final UserManager userManager;
     private final VehicleManager vehicleManager;
     private final ReservationManager reservationManager;
     private final SubscriptionManager subscriptionManager;
+    private final RentalManager rentalManager;
+    private final PricelistManager pricelistManager;
+    private final ReportManager reportManager;
 
     // --- Services ---
     private final AuthService authService;
@@ -43,11 +53,16 @@ public class AppContext {
         reservationRepository = new ReservationRepository();
         additionalServiceRepository = new AdditionalServiceRepository();
         subscriptionRepository = new SubscriptionRepository();
+        rentalRepository = new RentalRepository();
+        pricelistRepository = new PricelistRepository();
 
         userManager = new UserManager(userRepository);
         vehicleManager = new VehicleManager(vehicleRepository, vehicleModelRepository, vehicleCategoryRepository);
         reservationManager = new ReservationManager(reservationRepository, vehicleManager);
         subscriptionManager = new SubscriptionManager(subscriptionRepository);
+        pricelistManager = new PricelistManager(pricelistRepository);
+        rentalManager = new RentalManager(rentalRepository, reservationRepository, vehicleManager, pricelistRepository);
+        reportManager = new ReportManager(reservationRepository, rentalRepository, userRepository, vehicleModelRepository, subscriptionRepository);
 
         authService = new AuthService(userManager);
 
@@ -67,6 +82,10 @@ public class AppContext {
     public VehicleManager getVehicleManager() { return vehicleManager; }
     public ReservationManager getReservationManager() { return reservationManager; }
     public SubscriptionManager getSubscriptionManager() { return subscriptionManager; }
+    public RentalManager getRentalManager() { return rentalManager; }
+    public PricelistManager getPricelistManager() { return pricelistManager; }
+    public ReportManager getReportManager() { return reportManager; }
     public AuthService getAuthService() { return authService; }
     public AdditionalServiceRepository getAdditionalServiceRepository() { return additionalServiceRepository; }
+    public ReservationRepository getReservationRepository() { return reservationRepository; }
 }

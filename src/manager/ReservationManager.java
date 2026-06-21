@@ -79,7 +79,7 @@ public class ReservationManager {
 
         List<Reservation> activeReservations = reservationRepository.findAll().stream()
                 .filter(r -> r.getVehicleModelId().equals(modelId))
-                .filter(r -> r.getStatus() == ReservationStatus.PENDING || r.getStatus() == ReservationStatus.CONFIRMED)
+                .filter(r -> r.getStatus() == ReservationStatus.CONFIRMED)
                 .filter(r -> DateUtil.isOverlapping(r.getStartDate(), r.getEndDate(), start, end))
                 .collect(Collectors.toList());
 

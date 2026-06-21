@@ -3,6 +3,7 @@ package manager;
 import model.Subscription;
 import model.enums.SubscriptionStatus;
 import repository.SubscriptionRepository;
+import util.AppContext;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.UUID;
 
 public class SubscriptionManager {
 
-    private static final double ANNUAL_PRICE = 6000.0; // podrazumevana cena godisnje pretplate
+    private static final double ANNUAL_PRICE = AppContext.getInstance().getPricelistManager().getActivePricelist().get().getAnnualSubscriptionPrice();
     private static final int MAX_LATE_RETURNS_ALLOWED = 5;
 
     private final SubscriptionRepository subscriptionRepository;

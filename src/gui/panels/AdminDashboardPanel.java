@@ -1,22 +1,24 @@
 package gui.panels;
 
+import gui.forms.EmployeeManagementPanel;
+import gui.forms.PricelistPanel;
+import gui.forms.ReportPanel;
+import gui.forms.VehicleManagementPanel;
+import manager.ReportManager;
 import model.User;
+import util.AppContext;
 
 import javax.swing.*;
 import java.awt.*;
+import java.time.LocalDate;
 
-/**
- * Dashboard za Administratora.
- * Tabovi: Pregled, Zaposleni, Vozila, Cenovnik, Izvestaji.
- * Svaki tab je za sada placeholder panel — popuni ga konkretnom
- * tabelom/formom kad budes implementirao odgovarajuci deo (CRUD, izvestaji...).
- */
+
 public class AdminDashboardPanel extends JPanel {
 
-    private final User currentUser;
+    private final User admin;
 
     public AdminDashboardPanel(User currentUser) {
-        this.currentUser = currentUser;
+        this.admin = currentUser;
         setLayout(new BorderLayout());
         initTabs();
     }
@@ -25,18 +27,10 @@ public class AdminDashboardPanel extends JPanel {
         JTabbedPane tabbedPane = new JTabbedPane();
 
         tabbedPane.addTab("Pregled", buildOverviewTab());
-        tabbedPane.addTab("Zaposleni", buildPlaceholderTab(
-                "Upravljanje zaposlenima",
-                "Ovde ide UserManagementPanel — CRUD za agente i administratore."));
-        tabbedPane.addTab("Vozila", buildPlaceholderTab(
-                "Upravljanje vozilima",
-                "Ovde ide VehicleManagementPanel — kategorije, modeli, primerci vozila."));
-        tabbedPane.addTab("Cenovnik", buildPlaceholderTab(
-                "Cenovnik agencije",
-                "Ovde ide PricelistPanel — cene najma, popusti, kazne, trajanje najma."));
-        tabbedPane.addTab("Izveštaji", buildPlaceholderTab(
-                "Izveštaji i statistika",
-                "Ovde ide ReportPanel — izdavanja, rezervacije, prihodi/rashodi, XChart grafici."));
+        tabbedPane.addTab("Zaposleni", new EmployeeManagementPanel());
+        tabbedPane.addTab("Vozila", new VehicleManagementPanel());
+        tabbedPane.addTab("Cenovnik", new PricelistPanel(admin));
+        tabbedPane.addTab("Izveštaji", new ReportPanel());
 
         add(tabbedPane, BorderLayout.CENTER);
     }
@@ -45,10 +39,20 @@ public class AdminDashboardPanel extends JPanel {
         JPanel panel = new JPanel(new GridLayout(2, 2, 15, 15));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        panel.add(buildStatCard("Ukupno zaposlenih", "—"));
-        panel.add(buildStatCard("Ukupno vozila", "—"));
-        panel.add(buildStatCard("Aktivne rezervacije", "—"));
-        panel.add(buildStatCard("Prihod ovog meseca", "—"));
+        ReportManager reportManager = AppContext.getInstance().getReportManager();
+        long employeeCount = AppContext.getInstance().getUserManager().getAllAgents().size()
+                + AppContext.getInstance().getUserManager().getAllAdministrators().size();
+        long vehicleCount = AppContext.getInstance().getVehicleManager().getAllModels().stream()
+                .mapToLong(m -> AppContext.getInstance().getVehicleManager().getVehiclesForModel(m.getId()).size())
+                .sum();
+        long pendingReservations = AppContext.getInstance().getReservationManager().getPendingReservations().size();
+        ReportManager.FinancialReport monthReport = reportManager.getFinancialReport(
+                LocalDate.now().withDayOfMonth(1), LocalDate.now());
+
+        panel.add(buildStatCard("Ukupno zaposlenih", String.valueOf(employeeCount)));
+        panel.add(buildStatCard("Ukupno vozila", String.valueOf(vehicleCount)));
+        panel.add(buildStatCard("Rezervacije na čekanju", String.valueOf(pendingReservations)));
+        panel.add(buildStatCard("Prihod ovog meseca", String.format("%.2f RSD", monthReport.totalIncome())));
 
         return panel;
     }
@@ -66,32 +70,12 @@ public class AdminDashboardPanel extends JPanel {
         titleLabel.setForeground(Color.GRAY);
 
         JLabel valueLabel = new JLabel(value);
-        valueLabel.setFont(valueLabel.getFont().deriveFont(Font.BOLD, 26f));
+        valueLabel.setFont(valueLabel.getFont().deriveFont(Font.BOLD, 22f));
 
         card.add(titleLabel);
         card.add(Box.createVerticalStrut(8));
         card.add(valueLabel);
 
         return card;
-    }
-
-    private JPanel buildPlaceholderTab(String title, String description) {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
-
-        JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 16f));
-
-        JLabel descLabel = new JLabel("<html><body style='width: 350px'>" + description + "</body></html>");
-        descLabel.setForeground(Color.GRAY);
-        descLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-
-        JPanel textPanel = new JPanel();
-        textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
-        textPanel.add(titleLabel);
-        textPanel.add(descLabel);
-
-        panel.add(textPanel, BorderLayout.NORTH);
-        return panel;
     }
 }
