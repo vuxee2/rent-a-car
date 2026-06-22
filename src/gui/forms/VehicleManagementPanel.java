@@ -11,16 +11,22 @@ import util.AppContext;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Admin upravlja kategorijama, modelima i primercima vozila — kroz tri
- * pod-taba, svaki sa svojom tabelom i CRUD dugmadima.
- */
+
 public class VehicleManagementPanel extends JPanel {
 
     private final VehicleManager vehicleManager;
+
+    private List<VehicleCategory> currentCategories = new ArrayList<>();
+    private List<VehicleModel> currentModels = new ArrayList<>();
+    private List<Vehicle> currentVehicles = new ArrayList<>();
+
+    private DefaultTableModel categoriesTableModel;
+    private DefaultTableModel modelsTableModel;
+    private DefaultTableModel vehiclesTableModel;
 
     public VehicleManagementPanel() {
         this.vehicleManager = AppContext.getInstance().getVehicleManager();
@@ -36,49 +42,71 @@ public class VehicleManagementPanel extends JPanel {
     // ==================== KATEGORIJE ====================
 
     private JPanel buildCategoriesTab() {
-        DefaultTableModel tableModel = new DefaultTableModel(new Object[]{"Kategorija", "Cena/dan"}, 0) {
+        categoriesTableModel = new DefaultTableModel(
+                new Object[]{"Kategorija", "Cena/dan"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
         };
-        JTable table = new JTable(tableModel);
+
+        JTable table = new JTable(categoriesTableModel);
         table.setRowHeight(26);
 
-        Runnable[] refreshHolder = new Runnable[1];
-        refreshHolder[0] = () -> {
-            tableModel.setRowCount(0);
-            for (VehicleCategory c : vehicleManager.getAllCategories()) {
-                tableModel.addRow(new Object[]{ c.getType().name(), String.format("%.2f RSD", c.getDailyPrice()) });
-            }
-        };
-
         JButton addButton = new JButton("Dodaj kategoriju");
-        addButton.addActionListener(e -> openCategoryDialog(null, refreshHolder[0]));
+        addButton.addActionListener(e -> openCategoryDialog(null));
 
         JButton editButton = new JButton("Izmeni");
         editButton.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row < 0) { warnNoSelection(); return; }
-            openCategoryDialog(vehicleManager.getAllCategories().get(row), refreshHolder[0]);
+            openCategoryDialog(currentCategories.get(row));
+        });
+
+        JButton deleteButton = new JButton("Obriši");
+        deleteButton.setForeground(Color.RED);
+        deleteButton.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row < 0) { warnNoSelection(); return; }
+            VehicleCategory selected = currentCategories.get(row);
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Da li ste sigurni da želite da obrišete kategoriju "
+                            + selected.getType().toString() + " (" + selected.getDailyPrice() + ")?",
+                    "Potvrda brisanja", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                vehicleManager.deleteVehicleCategory(selected.getId());
+                refreshCategoriesTable();
+            }
         });
 
         JButton refreshButton = new JButton("Osveži");
-        refreshButton.addActionListener(e -> refreshHolder[0].run());
+        refreshButton.addActionListener(e -> refreshCategoriesTable());
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttons.add(refreshButton);
         buttons.add(addButton);
         buttons.add(editButton);
+        buttons.add(deleteButton);
 
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
         panel.add(buttons, BorderLayout.SOUTH);
 
-        refreshHolder[0].run();
+        refreshCategoriesTable();
         return panel;
     }
 
-    private void openCategoryDialog(VehicleCategory existing, Runnable onSave) {
+    private void refreshCategoriesTable() {
+        currentCategories = vehicleManager.getAllCategories();
+        categoriesTableModel.setRowCount(0);
+        for (VehicleCategory c : currentCategories) {
+            categoriesTableModel.addRow(new Object[]{
+                    c.getType().name(),
+                    String.format("%.2f RSD", c.getDailyPrice())
+            });
+        }
+    }
+
+    private void openCategoryDialog(VehicleCategory existing) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
                 existing == null ? "Nova kategorija" : "Izmena kategorije", true);
         dialog.setSize(350, 200);
@@ -92,9 +120,10 @@ public class VehicleManagementPanel extends JPanel {
 
         JComboBox<VehicleCategoryType> typeCombo = new JComboBox<>(VehicleCategoryType.values());
         if (existing != null) typeCombo.setSelectedItem(existing.getType());
-        typeCombo.setEnabled(existing == null); // tip kategorije se ne menja, samo cena
+        typeCombo.setEnabled(existing == null);
 
-        JTextField priceField = new JTextField(existing != null ? String.valueOf(existing.getDailyPrice()) : "3000", 12);
+        JTextField priceField = new JTextField(
+                existing != null ? String.valueOf(existing.getDailyPrice()) : "3000", 12);
 
         gbc.gridx = 0; gbc.gridy = 0; gbc.anchor = GridBagConstraints.EAST;
         form.add(new JLabel("Kategorija:"), gbc);
@@ -117,7 +146,7 @@ public class VehicleManagementPanel extends JPanel {
                 );
                 vehicleManager.addVehicleCategory(category);
                 dialog.dispose();
-                onSave.run();
+                refreshCategoriesTable();
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(dialog, "Cena mora biti broj.", "Greška", JOptionPane.ERROR_MESSAGE);
             } catch (IllegalStateException ex) {
@@ -135,52 +164,76 @@ public class VehicleManagementPanel extends JPanel {
     // ==================== MODELI ====================
 
     private JPanel buildModelsTab() {
-        DefaultTableModel tableModel = new DefaultTableModel(
+        modelsTableModel = new DefaultTableModel(
                 new Object[]{"Proizvođač", "Model", "Kategorija"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
         };
-        JTable table = new JTable(tableModel);
+
+        JTable table = new JTable(modelsTableModel);
         table.setRowHeight(26);
 
-        Runnable[] refreshHolder = new Runnable[1];
-        refreshHolder[0] = () -> {
-            tableModel.setRowCount(0);
-            for (VehicleModel m : vehicleManager.getAllModels()) {
-                String categoryName = vehicleManager.getCategoryById(m.getCategoryId())
-                        .map(c -> c.getType().name()).orElse("-");
-                tableModel.addRow(new Object[]{ m.getManufacturer(), m.getName(), categoryName });
-            }
-        };
-
         JButton addButton = new JButton("Dodaj model");
-        addButton.addActionListener(e -> openModelDialog(null, refreshHolder[0]));
+        addButton.addActionListener(e -> openModelDialog(null));
 
         JButton editButton = new JButton("Izmeni");
         editButton.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row < 0) { warnNoSelection(); return; }
-            openModelDialog(vehicleManager.getAllModels().get(row), refreshHolder[0]);
+            openModelDialog(currentModels.get(row));
+        });
+
+        JButton deleteButton = new JButton("Obriši");
+        deleteButton.setForeground(Color.RED);
+        deleteButton.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row < 0) { warnNoSelection(); return; }
+            VehicleModel selected = currentModels.get(row);
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Da li ste sigurni da želite da obrišete model " + selected.getFullName() + "?",
+                    "Potvrda brisanja", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                vehicleManager.deleteVehicleModel(selected.getId());
+                refreshModelsTable();
+            }
         });
 
         JButton refreshButton = new JButton("Osveži");
-        refreshButton.addActionListener(e -> refreshHolder[0].run());
+        refreshButton.addActionListener(e -> refreshModelsTable());
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttons.add(refreshButton);
         buttons.add(addButton);
         buttons.add(editButton);
+        buttons.add(deleteButton);
 
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
         panel.add(buttons, BorderLayout.SOUTH);
 
-        refreshHolder[0].run();
+        refreshModelsTable();
         return panel;
     }
 
-    private void openModelDialog(VehicleModel existing, Runnable onSave) {
+    private void refreshModelsTable() {
+        currentModels = vehicleManager.getAllModels();
+        modelsTableModel.setRowCount(0);
+        for (VehicleModel m : currentModels) {
+            String categoryName = currentCategories.stream()
+                    .filter(c -> c.getId().equals(m.getCategoryId()))
+                    .map(c -> c.getType().name())
+                    .findFirst()
+                    .orElse("?");
+            modelsTableModel.addRow(new Object[]{
+                    m.getManufacturer(),
+                    m.getName(),
+                    categoryName
+            });
+        }
+    }
+
+    private void openModelDialog(VehicleModel existing) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
                 existing == null ? "Novi model" : "Izmena modela", true);
         dialog.setSize(380, 250);
@@ -192,13 +245,15 @@ public class VehicleManagementPanel extends JPanel {
         gbc.insets = new Insets(6, 6, 6, 6);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JTextField manufacturerField = new JTextField(existing != null ? existing.getManufacturer() : "", 16);
-        JTextField nameField = new JTextField(existing != null ? existing.getName() : "", 16);
+        JTextField manufacturerField = new JTextField(
+                existing != null ? existing.getManufacturer() : "", 16);
+        JTextField nameField = new JTextField(
+                existing != null ? existing.getName() : "", 16);
 
-        List<VehicleCategory> categories = vehicleManager.getAllCategories();
-        JComboBox<VehicleCategory> categoryCombo = new JComboBox<>(categories.toArray(new VehicleCategory[0]));
+        JComboBox<VehicleCategory> categoryCombo = new JComboBox<>(
+                currentCategories.toArray(new VehicleCategory[0]));
         if (existing != null) {
-            categories.stream()
+            currentCategories.stream()
                     .filter(c -> c.getId().equals(existing.getCategoryId()))
                     .findFirst()
                     .ifPresent(categoryCombo::setSelectedItem);
@@ -223,7 +278,8 @@ public class VehicleManagementPanel extends JPanel {
         saveButton.addActionListener(e -> {
             VehicleCategory selectedCategory = (VehicleCategory) categoryCombo.getSelectedItem();
             if (selectedCategory == null) {
-                JOptionPane.showMessageDialog(dialog, "Prvo dodajte bar jednu kategoriju vozila.", "Greška", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "Prvo dodajte bar jednu kategoriju vozila.",
+                        "Greška", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             VehicleModel model = new VehicleModel(
@@ -234,7 +290,7 @@ public class VehicleManagementPanel extends JPanel {
             );
             vehicleManager.addVehicleModel(model);
             dialog.dispose();
-            onSave.run();
+            refreshModelsTable();
         });
 
         gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.CENTER;
@@ -247,64 +303,78 @@ public class VehicleManagementPanel extends JPanel {
     // ==================== PRIMERCI VOZILA ====================
 
     private JPanel buildVehiclesTab() {
-        DefaultTableModel tableModel = new DefaultTableModel(
+        vehiclesTableModel = new DefaultTableModel(
                 new Object[]{"Model", "Registracija", "Kilometraža", "Status"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
         };
-        JTable table = new JTable(tableModel);
+
+        JTable table = new JTable(vehiclesTableModel);
         table.setRowHeight(26);
 
-        Runnable[] refreshHolder = new Runnable[1];
-        List<Vehicle> allVehicles = new java.util.ArrayList<>();
-
-        refreshHolder[0] = () -> {
-            tableModel.setRowCount(0);
-            allVehicles.clear();
-            for (VehicleModel m : vehicleManager.getAllModels()) {
-                for (Vehicle v : vehicleManager.getVehiclesForModel(m.getId())) {
-                    allVehicles.add(v);
-                    tableModel.addRow(new Object[]{
-                            m.getFullName(),
-                            v.getLicensePlate(),
-                            v.getMileage(),
-                            v.getStatus() == VehicleStatus.AVAILABLE ? "DOSTUPNO" : "IZDATO"
-                    });
-                }
-            }
-        };
-
         JButton addButton = new JButton("Dodaj vozilo");
-        addButton.addActionListener(e -> openVehicleDialog(null, refreshHolder[0]));
+        addButton.addActionListener(e -> openVehicleDialog(null));
 
         JButton editButton = new JButton("Izmeni");
         editButton.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row < 0) { warnNoSelection(); return; }
-            openVehicleDialog(allVehicles.get(row), refreshHolder[0]);
+            openVehicleDialog(currentVehicles.get(row));
+        });
+
+        JButton deleteButton = new JButton("Obriši");
+        deleteButton.setForeground(Color.RED);
+        deleteButton.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row < 0) { warnNoSelection(); return; }
+            Vehicle selected = currentVehicles.get(row);
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Da li ste sigurni da želite da obrišete vozilo " + selected.getLicensePlate() + "?",
+                    "Potvrda brisanja", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                vehicleManager.deleteVehicle(selected.getId());
+                refreshVehiclesTable();
+            }
         });
 
         JButton refreshButton = new JButton("Osveži");
-        refreshButton.addActionListener(e -> refreshHolder[0].run());
+        refreshButton.addActionListener(e -> refreshVehiclesTable());
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttons.add(refreshButton);
         buttons.add(addButton);
         buttons.add(editButton);
+        buttons.add(deleteButton);
 
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
         panel.add(buttons, BorderLayout.SOUTH);
 
-        refreshHolder[0].run();
+        refreshVehiclesTable();
         return panel;
     }
 
-    private void openVehicleDialog(Vehicle existing, Runnable onSave) {
+    private void refreshVehiclesTable() {
+        currentVehicles.clear();
+        vehiclesTableModel.setRowCount(0);
+        for (VehicleModel m : vehicleManager.getAllModels()) {
+            for (Vehicle v : vehicleManager.getVehiclesForModel(m.getId())) {
+                currentVehicles.add(v);
+                vehiclesTableModel.addRow(new Object[]{
+                        m.getFullName(),
+                        v.getLicensePlate(),
+                        v.getMileage(),
+                        v.getStatus() == VehicleStatus.AVAILABLE ? "DOSTUPNO" : "IZDATO"
+                });
+            }
+        }
+    }
+
+    private void openVehicleDialog(Vehicle existing) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
                 existing == null ? "Novo vozilo" : "Izmena vozila", true);
-        dialog.setSize(380, 250);
+        dialog.setSize(380, 280);
         dialog.setLocationRelativeTo(this);
 
         JPanel form = new JPanel(new GridBagLayout());
@@ -313,15 +383,19 @@ public class VehicleManagementPanel extends JPanel {
         gbc.insets = new Insets(6, 6, 6, 6);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        List<VehicleModel> models = vehicleManager.getAllModels();
-        JComboBox<VehicleModel> modelCombo = new JComboBox<>(models.toArray(new VehicleModel[0]));
+        JComboBox<VehicleModel> modelCombo = new JComboBox<>(
+                currentModels.toArray(new VehicleModel[0]));
         if (existing != null) {
-            models.stream().filter(m -> m.getId().equals(existing.getModelId()))
-                    .findFirst().ifPresent(modelCombo::setSelectedItem);
+            currentModels.stream()
+                    .filter(m -> m.getId().equals(existing.getModelId()))
+                    .findFirst()
+                    .ifPresent(modelCombo::setSelectedItem);
         }
 
-        JTextField plateField = new JTextField(existing != null ? existing.getLicensePlate() : "", 16);
-        JTextField mileageField = new JTextField(existing != null ? String.valueOf(existing.getMileage()) : "0", 16);
+        JTextField plateField = new JTextField(
+                existing != null ? existing.getLicensePlate() : "", 16);
+        JTextField mileageField = new JTextField(
+                existing != null ? String.valueOf(existing.getMileage()) : "0", 16);
         JComboBox<VehicleStatus> statusCombo = new JComboBox<>(VehicleStatus.values());
         if (existing != null) statusCombo.setSelectedItem(existing.getStatus());
 
@@ -349,7 +423,8 @@ public class VehicleManagementPanel extends JPanel {
         saveButton.addActionListener(e -> {
             VehicleModel selectedModel = (VehicleModel) modelCombo.getSelectedItem();
             if (selectedModel == null) {
-                JOptionPane.showMessageDialog(dialog, "Prvo dodajte bar jedan model vozila.", "Greška", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "Prvo dodajte bar jedan model vozila.",
+                        "Greška", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             try {
@@ -363,9 +438,10 @@ public class VehicleManagementPanel extends JPanel {
                 );
                 vehicleManager.addVehicle(vehicle);
                 dialog.dispose();
-                onSave.run();
+                refreshVehiclesTable();
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(dialog, "Kilometraža mora biti ceo broj.", "Greška", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "Kilometraža mora biti ceo broj.",
+                        "Greška", JOptionPane.ERROR_MESSAGE);
             }
         });
 

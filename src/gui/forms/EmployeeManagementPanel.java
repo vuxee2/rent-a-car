@@ -17,11 +17,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Admin upravlja zaposlenima (Agent, Administrator) — pregled, dodavanje,
- * izmena, brisanje. Plata se prikazuje izracunata po formuli
- * osnova * (koeficijent + 0.004 * godine_staza).
- */
+
 public class EmployeeManagementPanel extends JPanel {
 
     private final UserManager userManager;
@@ -120,10 +116,6 @@ public class EmployeeManagementPanel extends JPanel {
         }
     }
 
-    /**
-     * Otvara dijalog za dodavanje (employee == null) ili izmenu postojeceg
-     * zaposlenog.
-     */
     private void openEmployeeDialog(Employee existing) {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
                 existing == null ? "Novi zaposleni" : "Izmena zaposlenog", true);

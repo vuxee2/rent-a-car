@@ -150,7 +150,7 @@ public class NewReservationForm extends JPanel {
                     ? String.format("%.2f RSD/dan", service.getPrice())
                     : String.format("%.2f RSD jednokratno", service.getPrice());
 
-            JCheckBox checkBox = new JCheckBox(service.getDisplayName() + " — " + priceLabel);
+            JCheckBox checkBox = new JCheckBox(service.getDisplayName() + " - " + priceLabel);
             checkBox.putClientProperty("service", service);
 
             checkBox.addActionListener(e -> updateEstimatedPrice());

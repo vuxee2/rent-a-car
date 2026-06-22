@@ -26,7 +26,7 @@ public class LoginFrame extends JFrame {
         initLayout();
         initListeners();
 
-        setTitle("Rent-A-Car — Prijava");
+        setTitle("Rent-A-Car | Prijava");
         setSize(380, 260);
         setLocationRelativeTo(null); // centrira prozor na ekran
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

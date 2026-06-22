@@ -27,10 +27,7 @@ public class ReportManager {
         this.vehicleModelRepository = vehicleModelRepository;
         this.subscriptionRepository = subscriptionRepository;
     }
-
-    /**
-     * IZVESTAJ: izdavanja — koliko je vozila svaki agent izdao u periodu.
-     */
+    
     public Map<String, Long> getAgentIssuedVehiclesReport(LocalDate start, LocalDate end) {
         List<Rental> rentalsInPeriod = rentalRepository.findAll().stream()
                 .filter(r -> isWithinRange(r.getExpectedReturnDate(), start, end)
@@ -50,10 +47,6 @@ public class ReportManager {
         return result;
     }
 
-    /**
-     * IZVESTAJ: rezervacije — koliko je potvrdjeno/odbijeno/otkazano u periodu
-     * (po datumu kreiranja rezervacije).
-     */
     public Map<ReservationStatus, Long> getReservationStatusReport(LocalDate start, LocalDate end) {
         List<Reservation> reservationsInPeriod = reservationRepository.findAll().stream()
                 .filter(r -> r.getCreatedAt() != null)
@@ -67,10 +60,6 @@ public class ReportManager {
         return result;
     }
 
-    /**
-     * IZVESTAJ: modeli vozila — podaci o modelu/kategoriji, ukupan broj
-     * iznajmljivanja i rezervacija tog modela u periodu.
-     */
     public List<VehicleModelReportRow> getVehicleModelReport(LocalDate start, LocalDate end) {
         List<VehicleModel> allModels = vehicleModelRepository.findAll();
         List<Reservation> reservationsInPeriod = reservationRepository.findAll().stream()
@@ -94,11 +83,6 @@ public class ReportManager {
         return result;
     }
 
-    /**
-     * IZVESTAJ: prihodi i rashodi za period.
-     * Prihodi: uplacene pretplate, najmovi vozila (cena rezervacije), naplacene kazne.
-     * Rashodi: plate zaposlenih (racunaju se za ceo period jednom, ne po danu).
-     */
     public FinancialReport getFinancialReport(LocalDate start, LocalDate end) {
         double subscriptionIncome = subscriptionRepository.findAll().stream()
                 .filter(s -> isWithinRange(s.getStartDate(), start, end))
@@ -128,9 +112,6 @@ public class ReportManager {
         return new FinancialReport(subscriptionIncome, rentalIncome, lateFeesIncome, totalIncome, salaryExpense);
     }
 
-    /**
-     * Za chart: prihod po kategoriji klijenta za poslednjih N meseci.
-     */
     public Map<String, Double> getRevenueByClientCategoryLastMonths(int months) {
         LocalDate from = LocalDate.now().minusMonths(months);
         Map<String, Double> result = new LinkedHashMap<>();
@@ -151,10 +132,6 @@ public class ReportManager {
         return result;
     }
 
-    /**
-     * Za chart: opterecenje agenata po broju obradjenih rezervacija u
-     * poslednjih 30 dana.
-     */
     public Map<String, Long> getAgentWorkloadLast30Days() {
         LocalDate from = LocalDate.now().minusDays(30);
         List<Reservation> recentlyHandled = reservationRepository.findAll().stream()
@@ -173,9 +150,6 @@ public class ReportManager {
         return result;
     }
 
-    /**
-     * Za chart: status svih rezervacija kreiranih u poslednjih 30 dana.
-     */
     public Map<ReservationStatus, Long> getReservationStatusLast30Days() {
         LocalDate from = LocalDate.now().minusDays(30);
         return getReservationStatusReport(from, LocalDate.now());

@@ -17,17 +17,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Izvestaji za administratora:
- *  - tekstualni izvestaji (izdavanja po agentu, status rezervacija, modeli
- *    vozila, prihodi/rashodi) za izabrani opseg datuma
- *  - grafikoni (XChart): prihod po kategoriji klijenta poslednjih 12 meseci,
- *    opterecenje agenata poslednjih 30 dana, status rezervacija poslednjih
- *    30 dana
- *
- * NAPOMENA: ova klasa zahteva XChart biblioteku na build path-u
- * (vidi UPUTSTVO_XCHART.txt u korenu projekta).
- */
 public class ReportPanel extends JPanel {
 
     private final ReportManager reportManager;
@@ -96,6 +85,7 @@ public class ReportPanel extends JPanel {
 
     // ==================== TEKSTUALNI IZVESTAJI ====================
 
+    // Izdavanja po agentu
     private JPanel buildAgentIssuedReport(LocalDate from, LocalDate to) {
         DefaultTableModel model = new DefaultTableModel(new Object[]{"Agent", "Broj izdatih vozila"}, 0) {
             @Override
@@ -107,6 +97,7 @@ public class ReportPanel extends JPanel {
         return wrapInTable(model, "Izdavanja vozila po agentu (" + DateUtil.format(from) + " — " + DateUtil.format(to) + ")");
     }
 
+    // Status rezervacija
     private JPanel buildReservationStatusReport(LocalDate from, LocalDate to) {
         DefaultTableModel model = new DefaultTableModel(new Object[]{"Status", "Broj rezervacija"}, 0) {
             @Override
@@ -118,6 +109,7 @@ public class ReportPanel extends JPanel {
         return wrapInTable(model, "Status rezervacija (" + DateUtil.format(from) + " — " + DateUtil.format(to) + ")");
     }
 
+    // Modeli vozila
     private JPanel buildVehicleModelReport(LocalDate from, LocalDate to) {
         DefaultTableModel model = new DefaultTableModel(
                 new Object[]{"Model", "Kategorija", "Broj rezervacija", "Broj iznajmljivanja"}, 0) {
@@ -134,6 +126,7 @@ public class ReportPanel extends JPanel {
         return wrapInTable(model, "Statistika po modelu vozila (" + DateUtil.format(from) + " — " + DateUtil.format(to) + ")");
     }
 
+    // Prihodi i rashodi
     private JPanel buildFinancialReport(LocalDate from, LocalDate to) {
         ReportManager.FinancialReport report = reportManager.getFinancialReport(from, to);
 
@@ -163,16 +156,13 @@ public class ReportPanel extends JPanel {
 
     // ==================== GRAFIKONI (XChart) ====================
 
-    /**
-     * Prihod po kategoriji klijenta za poslednjih 12 meseci, prikazan kao
-     * pie chart (raspodela ukupnog prihoda po kategoriji).
-     */
+    // Prihod po kategoriji
     private JPanel buildRevenueByCategoryChart() {
         Map<String, Double> data = reportManager.getRevenueByClientCategoryLastMonths(12);
 
         PieChart chart = new PieChartBuilder()
                 .width(700).height(500)
-                .title("Prihod po kategoriji klijenta — poslednjih 12 meseci")
+                .title("Prihod po kategoriji klijenta - poslednjih 12 meseci")
                 .build();
 
         chart.getStyler().setLegendVisible(true);
@@ -189,16 +179,13 @@ public class ReportPanel extends JPanel {
         return panel;
     }
 
-    /**
-     * Opterecenje agenata po broju obradjenih rezervacija u poslednjih 30
-     * dana, prikazano kao bar chart.
-     */
+    // Opterecenje agenta u prethodnih 30 dana
     private JPanel buildAgentWorkloadChart() {
         Map<String, Long> data = reportManager.getAgentWorkloadLast30Days();
 
         CategoryChart chart = new CategoryChartBuilder()
                 .width(700).height(500)
-                .title("Opterećenje agenata — poslednjih 30 dana")
+                .title("Opterećenje agenata - poslednjih 30 dana")
                 .xAxisTitle("Agent")
                 .yAxisTitle("Broj obrađenih rezervacija")
                 .build();
@@ -217,19 +204,17 @@ public class ReportPanel extends JPanel {
         return panel;
     }
 
-    /**
-     * Status svih rezervacija kreiranih u poslednjih 30 dana, prikazan kao
-     * pie chart.
-     */
+    // Status rezervacije u prethodnih 30 dana
     private JPanel buildReservationStatusChart() {
         Map<ReservationStatus, Long> data = reportManager.getReservationStatusLast30Days();
 
         PieChart chart = new PieChartBuilder()
                 .width(700).height(500)
-                .title("Status rezervacija — poslednjih 30 dana")
+                .title("Status rezervacija - poslednjih 30 dana")
                 .build();
 
         chart.getStyler().setLegendVisible(true);
+        chart.getStyler().setPlotContentSize(0.8);
 
         boolean anyData = false;
         for (Map.Entry<ReservationStatus, Long> entry : data.entrySet()) {

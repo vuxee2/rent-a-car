@@ -85,7 +85,7 @@ public class MyReservationsPanel extends JPanel {
     }
 
     private String formatServiceNames(String serviceIdsCsv) {
-        if (serviceIdsCsv == null || serviceIdsCsv.isBlank()) return "—";
+        if (serviceIdsCsv == null || serviceIdsCsv.isBlank()) return "-";
         return java.util.Arrays.stream(serviceIdsCsv.split(","))
                 .map(id -> allServices.stream()
                         .filter(s -> s.getId().equals(id))

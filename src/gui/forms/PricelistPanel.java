@@ -11,11 +11,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
-/**
- * Admin definise cenovnik agencije: podrazumevano trajanje najma, cena
- * godisnje pretplate, popusti za kategorije klijenata, kazna za kasnjenje.
- * Kreiranjem novog cenovnika prethodni se automatski zatvara (validTo).
- */
+
 public class PricelistPanel extends JPanel {
 
     private final User admin;
@@ -49,7 +45,7 @@ public class PricelistPanel extends JPanel {
     private JScrollPane buildHistoryTable() {
         historyTableModel = new DefaultTableModel(
                 new Object[]{"Važi od", "Važi do", "Trajanje najma", "Pretplata", "Kazna/dan",
-                        "Popust STUDENT", "Popust PENSIONER", "Popust COMPANY"}, 0) {
+                        "Popust STUDENT", "Popust PENZIONER", "Popust FIRMA"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
         };
@@ -74,7 +70,7 @@ public class PricelistPanel extends JPanel {
 
         JTextField defaultDaysField = new JTextField("3", 6);
         JTextField subscriptionPriceField = new JTextField("6000", 8);
-        JTextField lateFeeField = new JTextField("500", 8);
+        JTextField lateFeeField = new JTextField("5000", 8);
         JTextField studentDiscountField = new JTextField("10", 5);
         JTextField pensionerDiscountField = new JTextField("15", 5);
         JTextField companyDiscountField = new JTextField("5", 5);
@@ -142,7 +138,7 @@ public class PricelistPanel extends JPanel {
             currentSummaryLabel.setText(String.format(
                     "<html>Trajanje najma: <b>%d dana</b> &nbsp;|&nbsp; Pretplata: <b>%.2f RSD</b> "
                             + "&nbsp;|&nbsp; Kazna za kašnjenje: <b>%.2f RSD/dan</b><br>"
-                            + "Popusti — Student: <b>%.0f%%</b>, Penzioner: <b>%.0f%%</b>, Firma: <b>%.0f%%</b></html>",
+                            + "Popusti - Student: <b>%.0f%%</b>, Penzioner: <b>%.0f%%</b>, Firma: <b>%.0f%%</b></html>",
                     p.getDefaultRentalDays(), p.getAnnualSubscriptionPrice(), p.getLateReturnFeePerDay(),
                     p.getStudentDiscountPercent(), p.getPensionerDiscountPercent(), p.getCompanyDiscountPercent()
             ));

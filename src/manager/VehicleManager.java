@@ -90,4 +90,16 @@ public class VehicleManager {
             vehicleRepository.save(vehicle.get());
         }
     }
+
+    public void deleteVehicleCategory(String id) {
+        vehicleCategoryRepository.delete(id);
+    }
+
+    public void deleteVehicleModel(String id) {
+        vehicleModelRepository.delete(id);
+    }
+
+    public void deleteVehicle(String id) {
+        vehicleRepository.delete(id);
+    }
 }

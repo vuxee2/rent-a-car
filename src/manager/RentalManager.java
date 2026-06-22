@@ -84,7 +84,7 @@ public class RentalManager {
             throw new IllegalStateException("Kilometraža pri vraćanju ne može biti manja od kilometraže pri preuzimanju.");
         }
 
-        AppContext.getInstance().getReservationRepository().delete(rental.getReservationId()); // ako se vrate kola brise se rezervacija
+    //    AppContext.getInstance().getReservationRepository().delete(rental.getReservationId()); // ako se vrate kola brise se rezervacija
 
         double lateFee = calculateLateFee(rental, actualReturnDate);
 

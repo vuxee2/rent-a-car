@@ -17,7 +17,7 @@ public class MainFrame extends JFrame {
     public MainFrame(User currentUser) {
         this.currentUser = currentUser;
 
-        setTitle("Rent-A-Car — " + currentUser.getFullName() + " (" + currentUser.getRole() + ")");
+        setTitle("Rent-A-Car | " + currentUser.getFullName() + " (" + currentUser.getRole() + ")");
         setSize(1000, 650);
         setMinimumSize(new Dimension(800, 500));
         setLocationRelativeTo(null);
