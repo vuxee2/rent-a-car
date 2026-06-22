@@ -8,7 +8,6 @@ import model.enums.VehicleStatus;
 import repository.PricelistRepository;
 import repository.RentalRepository;
 import repository.ReservationRepository;
-import util.AppContext;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -18,9 +17,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class RentalManager {
-
-    private static final int DEFAULT_RENTAL_DAYS = 3;
-
     private final RentalRepository rentalRepository;
     private final ReservationRepository reservationRepository;
     private final VehicleManager vehicleManager;
@@ -142,9 +138,5 @@ public class RentalManager {
 
     public Optional<Rental> getRentalByReservationId(String reservationId) {
         return rentalRepository.findByReservationId(reservationId);
-    }
-
-    public static int getDefaultRentalDays() {
-        return DEFAULT_RENTAL_DAYS;
     }
 }

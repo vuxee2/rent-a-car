@@ -57,6 +57,7 @@ public class NewReservationForm extends JPanel {
     }
 
     private double getDiscount() {
+        if (client.getCategory() == null) return 0;
         switch (client.getCategory()) {
             case STUDENT:
                 return AppContext.getInstance().getPricelistManager().getActivePricelist().get().getStudentDiscountPercent();

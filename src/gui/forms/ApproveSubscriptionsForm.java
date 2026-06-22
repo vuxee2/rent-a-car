@@ -2,6 +2,7 @@ package gui.forms;
 
 import manager.RentalManager;
 import manager.SubscriptionManager;
+import manager.UserManager;
 import model.Subscription;
 import model.User;
 import util.AppContext;
@@ -18,6 +19,7 @@ public class ApproveSubscriptionsForm extends JPanel {
     private final User agent;
     private final SubscriptionManager subscriptionManager;
     private final RentalManager rentalManager;
+    private final UserManager userManager;
 
     private DefaultTableModel tableModel;
     private JTable table;
@@ -27,6 +29,7 @@ public class ApproveSubscriptionsForm extends JPanel {
         this.agent = agent;
         this.subscriptionManager = AppContext.getInstance().getSubscriptionManager();
         this.rentalManager = AppContext.getInstance().getRentalManager();
+        this.userManager = AppContext.getInstance().getUserManager();
 
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
@@ -37,7 +40,7 @@ public class ApproveSubscriptionsForm extends JPanel {
 
     private JPanel buildTable() {
         tableModel = new DefaultTableModel(
-                new Object[]{"Klijent ID", "Datum zahteva", "Iznos"}, 0) {
+                new Object[]{"Klijent", "Datum zahteva", "Iznos"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
         };
@@ -74,7 +77,7 @@ public class ApproveSubscriptionsForm extends JPanel {
 
         for (Subscription s : pendingSubscriptions) {
             tableModel.addRow(new Object[]{
-                    s.getClientId(),
+                    userManager.getById(s.getClientId()).get().getFullName(),
                     DateUtil.format(s.getStartDate()),
                     String.format("%.2f RSD", s.getPaidAmount())
             });

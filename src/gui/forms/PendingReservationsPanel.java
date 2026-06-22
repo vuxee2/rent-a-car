@@ -1,6 +1,7 @@
 package gui.forms;
 
 import manager.ReservationManager;
+import manager.UserManager;
 import manager.VehicleManager;
 import model.Reservation;
 import model.User;
@@ -18,6 +19,7 @@ public class PendingReservationsPanel extends JPanel {
     private final User agent;
     private final ReservationManager reservationManager;
     private final VehicleManager vehicleManager;
+    private final UserManager userManager;
 
     private DefaultTableModel tableModel;
     private JTable table;
@@ -27,6 +29,7 @@ public class PendingReservationsPanel extends JPanel {
         this.agent = agent;
         this.reservationManager = AppContext.getInstance().getReservationManager();
         this.vehicleManager = AppContext.getInstance().getVehicleManager();
+        this.userManager = AppContext.getInstance().getUserManager();
 
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
@@ -37,7 +40,7 @@ public class PendingReservationsPanel extends JPanel {
 
     private JPanel buildTable() {
         tableModel = new DefaultTableModel(
-                new Object[]{"Klijent ID", "Model vozila", "Od", "Do", "Cena"}, 0) {
+                new Object[]{"Klijent", "Model vozila", "Od", "Do", "Cena"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -77,7 +80,7 @@ public class PendingReservationsPanel extends JPanel {
         for (Reservation r : currentReservations) {
             VehicleModel model = vehicleManager.getModelById(r.getVehicleModelId()).orElse(null);
             tableModel.addRow(new Object[]{
-                    r.getClientId(),
+                    userManager.getById(r.getClientId()).get().getFullName(),
                     model != null ? model.getFullName() : r.getVehicleModelId(),
                     DateUtil.format(r.getStartDate()),
                     DateUtil.format(r.getEndDate()),

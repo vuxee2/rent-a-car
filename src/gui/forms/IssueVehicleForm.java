@@ -2,6 +2,7 @@ package gui.forms;
 
 // import manager.ReservationManager;
 import manager.RentalManager;
+import manager.UserManager;
 import manager.VehicleManager;
 import model.Reservation;
 import model.User;
@@ -22,6 +23,7 @@ public class IssueVehicleForm extends JPanel {
     // private final ReservationManager reservationManager;
     private final RentalManager rentalManager;
     private final VehicleManager vehicleManager;
+    private final UserManager userManager;
 
     private DefaultTableModel reservationTableModel;
     private JTable reservationTable;
@@ -38,6 +40,7 @@ public class IssueVehicleForm extends JPanel {
         // this.reservationManager = AppContext.getInstance().getReservationManager();
         this.rentalManager = AppContext.getInstance().getRentalManager();
         this.vehicleManager = AppContext.getInstance().getVehicleManager();
+        this.userManager = AppContext.getInstance().getUserManager();
 
         setLayout(new GridLayout(1, 2, 10, 10));
         setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
@@ -50,7 +53,7 @@ public class IssueVehicleForm extends JPanel {
 
     private JPanel buildReservationsPanel() {
         reservationTableModel = new DefaultTableModel(
-                new Object[]{"Klijent ID", "Model", "Od", "Do"}, 0) {
+                new Object[]{"Klijent", "Model", "Od", "Do"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
         };
@@ -134,7 +137,7 @@ public class IssueVehicleForm extends JPanel {
         for (Reservation r : confirmedReservations) {
             VehicleModel model = vehicleManager.getModelById(r.getVehicleModelId()).orElse(null);
             reservationTableModel.addRow(new Object[]{
-                    r.getClientId(),
+                    userManager.getById(r.getClientId()).get().getFullName(),
                     model != null ? model.getFullName() : r.getVehicleModelId(),
                     DateUtil.format(r.getStartDate()),
                     DateUtil.format(r.getEndDate())
