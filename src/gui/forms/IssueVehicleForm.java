@@ -1,6 +1,5 @@
 package gui.forms;
 
-// import manager.ReservationManager;
 import manager.RentalManager;
 import manager.UserManager;
 import manager.VehicleManager;
@@ -19,7 +18,6 @@ import util.DateUtil;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
