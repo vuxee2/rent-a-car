@@ -1,5 +1,6 @@
 package gui.panels;
 
+import gui.forms.AdditionalServiceManagementPanel;
 import gui.forms.EmployeeManagementPanel;
 import gui.forms.PricelistPanel;
 import gui.forms.ReportPanel;
@@ -30,6 +31,7 @@ public class AdminDashboardPanel extends JPanel {
         tabbedPane.addTab("Zaposleni", new EmployeeManagementPanel());
         tabbedPane.addTab("Vozila", new VehicleManagementPanel());
         tabbedPane.addTab("Cenovnik", new PricelistPanel(admin));
+        tabbedPane.addTab("Dodatne usluge", new AdditionalServiceManagementPanel());
         tabbedPane.addTab("Izveštaji", new ReportPanel());
 
         add(tabbedPane, BorderLayout.CENTER);

@@ -5,7 +5,6 @@ import model.Reservation;
 import model.Vehicle;
 import model.enums.ReservationStatus;
 import repository.ReservationRepository;
-import util.AppContext;
 import util.DateUtil;
 
 import java.time.LocalDate;
@@ -19,11 +18,14 @@ public class ReservationManager {
 
     private final ReservationRepository reservationRepository;
     private final VehicleManager vehicleManager;
+    private final SubscriptionManager subscriptionManager;
 
     public ReservationManager(ReservationRepository reservationRepository,
-                               VehicleManager vehicleManager) {
+                                VehicleManager vehicleManager,
+                                SubscriptionManager subscriptionManager) {
         this.reservationRepository = reservationRepository;
         this.vehicleManager = vehicleManager;
+        this.subscriptionManager = subscriptionManager;
     }
 
     public Reservation createReservation(Client client, String vehicleModelId,
@@ -50,7 +52,7 @@ public class ReservationManager {
             throw new IllegalStateException("Nema slobodnih vozila ovog modela u izabranom periodu.");
         }
 
-        if (!AppContext.getInstance().getSubscriptionManager().hasActiveSubscription(client.getId()))
+        if (!subscriptionManager.hasActiveSubscription(client.getId()))
         {
             throw new IllegalStateException("Niste pretplaćeni na servis.");
         }
@@ -87,12 +89,12 @@ public class ReservationManager {
         return vehiclesOfModel.size() > activeReservations.size();
     }
 
-    /** Proverava da li je klijent napravio rezervaciju u proteklih 24h. */
+    /** Klijent koji je otkazao rezervaciju (ili nije preuzeo vozilo) ne sme da rezervise u naredna 24h. */
     public boolean canClientReserveNow(String clientId) {
         return reservationRepository.findByClientId(clientId).stream()
                 .filter(r -> r.getStatus() == ReservationStatus.CANCELLED)
-                .noneMatch(r -> r.getCreatedAt() != null
-                        && ChronoUnit.HOURS.between(r.getCreatedAt(), LocalDateTime.now()) < 24);
+                .filter(r -> r.getCancelledAt() != null)
+                .noneMatch(r -> ChronoUnit.HOURS.between(r.getCancelledAt(), LocalDateTime.now()) < 24);
     }
 
     public List<Reservation> getReservationsForClient(String clientId) {
@@ -106,6 +108,7 @@ public class ReservationManager {
     public void cancelReservation(String reservationId) {
         reservationRepository.findById(reservationId).ifPresent(r -> {
             r.setStatus(ReservationStatus.CANCELLED);
+            r.setCancelledAt(LocalDateTime.now());
             reservationRepository.save(r);
         });
     }

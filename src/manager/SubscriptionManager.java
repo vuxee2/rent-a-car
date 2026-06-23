@@ -1,9 +1,9 @@
 package manager;
 
+import model.Pricelist;
 import model.Subscription;
 import model.enums.SubscriptionStatus;
 import repository.SubscriptionRepository;
-import util.AppContext;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -12,13 +12,21 @@ import java.util.UUID;
 
 public class SubscriptionManager {
 
-    private static final double ANNUAL_PRICE = AppContext.getInstance().getPricelistManager().getActivePricelist().get().getAnnualSubscriptionPrice();
     private static final int MAX_LATE_RETURNS_ALLOWED = 5;
 
     private final SubscriptionRepository subscriptionRepository;
+    private final PricelistManager pricelistManager;
 
-    public SubscriptionManager(SubscriptionRepository subscriptionRepository) {
+    public SubscriptionManager(SubscriptionRepository subscriptionRepository, PricelistManager pricelistManager) {
         this.subscriptionRepository = subscriptionRepository;
+        this.pricelistManager = pricelistManager;
+    }
+
+    private double getAnnualSubscriptionPrice() {
+        return pricelistManager.getActivePricelist()
+                .map(Pricelist::getAnnualSubscriptionPrice)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Nije definisan cenovnik - administrator mora prvo da kreira cenovnik."));
     }
 
     public List<Subscription> getSubscriptionsForClient(String clientId) {
@@ -49,7 +57,7 @@ public class SubscriptionManager {
                 LocalDate.now(),
                 LocalDate.now().plusYears(1),
                 SubscriptionStatus.PENDING,
-                ANNUAL_PRICE,
+                getAnnualSubscriptionPrice(),
                 null
         );
         subscriptionRepository.save(subscription);

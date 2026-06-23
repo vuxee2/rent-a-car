@@ -251,26 +251,38 @@ public class NewReservationForm extends JPanel {
     private double calculateTotalPrice(int modelRow, LocalDate start, LocalDate end) {
         VehicleModel model = currentResults.get(modelRow);
         VehicleCategory cat = vehicleManager.getCategoryById(model.getCategoryId()).orElse(null);
-        long days = ChronoUnit.DAYS.between(start, end);
+        double dailyPrice = (cat != null ? cat.getDailyPrice() : 0);
+        long baseDays = ChronoUnit.DAYS.between(start, end);
 
-        double total = (cat != null ? cat.getDailyPrice() : 0) * days;
-
+        // dodatni dani
+        int extra = 0;
         for (JCheckBox checkBox : serviceCheckboxes) {
             if (!checkBox.isSelected()) continue;
             AdditionalService service = (AdditionalService) checkBox.getClientProperty("service");
             if (service.getChargeType() == ChargeType.PER_DAY) {
                 JSpinner spinner = (JSpinner) checkBox.getClientProperty("daysSpinner");
-                if (spinner != null) {
-                    int daysSpinner = (int) spinner.getValue();
-                    total += service.getPrice() * daysSpinner;
-                    additionalDays = daysSpinner;
-                }
+                if (spinner != null) extra = Math.max(extra, (int) spinner.getValue());
+            }
+        }
+        this.additionalDays = extra;
+
+        // cena auta za ceo period najma (osnovni + dodatni dani)
+        double total = dailyPrice * (baseDays + extra);
+
+        // dodatne usluge
+        for (JCheckBox checkBox : serviceCheckboxes) {
+            if (!checkBox.isSelected()) continue;
+            AdditionalService service = (AdditionalService) checkBox.getClientProperty("service");
+            if (service.getChargeType() == ChargeType.PER_DAY) {
+                JSpinner spinner = (JSpinner) checkBox.getClientProperty("daysSpinner");
+                int d = spinner != null ? (int) spinner.getValue() : 0;
+                total += service.getPrice() * d;
             } else {
                 total += service.getPrice();
             }
         }
 
-        if (discount != 0){
+        if (discount != 0) {
             total -= discount / 100 * total;
         }
 

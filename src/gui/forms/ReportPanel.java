@@ -4,6 +4,7 @@ import manager.ReportManager;
 import model.enums.ReservationStatus;
 import org.knowm.xchart.CategoryChart;
 import org.knowm.xchart.CategoryChartBuilder;
+import org.knowm.xchart.CategorySeries;
 import org.knowm.xchart.PieChart;
 import org.knowm.xchart.PieChartBuilder;
 import org.knowm.xchart.XChartPanel;
@@ -158,25 +159,34 @@ public class ReportPanel extends JPanel {
 
     // Prihod po kategoriji
     private JPanel buildRevenueByCategoryChart() {
-        Map<String, Double> data = reportManager.getRevenueByClientCategoryLastMonths(12);
+        ReportManager.MonthlyRevenueReport report = reportManager.getMonthlyRevenueByCategory(12);
+        List<String> months = report.monthLabels();
 
-        PieChart chart = new PieChartBuilder()
-                .width(700).height(500)
+        CategoryChart chart = new CategoryChartBuilder()
+                .width(800).height(500)
                 .title("Prihod po kategoriji klijenta - poslednjih 12 meseci")
+                .xAxisTitle("Mesec")
+                .yAxisTitle("Prihod (RSD)")
                 .build();
 
+        chart.getStyler().setDefaultSeriesRenderStyle(CategorySeries.CategorySeriesRenderStyle.Line);
+        chart.getStyler().setXAxisLabelRotation(45);
         chart.getStyler().setLegendVisible(true);
-        chart.getStyler().setPlotContentSize(0.8);
 
-        if (data.isEmpty()) {
-            chart.addSeries("Nema podataka", 1);
-        } else {
-            data.forEach(chart::addSeries);
-        }
+        addRevenueSeries(chart, "Student", months, report.revenuePerCategory().get("STUDENT"));
+        addRevenueSeries(chart, "Penzioner", months, report.revenuePerCategory().get("PENSIONER"));
+        addRevenueSeries(chart, "Firma", months, report.revenuePerCategory().get("COMPANY"));
+        addRevenueSeries(chart, "Bez kategorije", months, report.revenuePerCategory().get("BEZ KATEGORIJE"));
+        addRevenueSeries(chart, "Ukupno", months, report.totalPerMonth());
 
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(new XChartPanel<>(chart), BorderLayout.CENTER);
         return panel;
+    }
+
+    private void addRevenueSeries(CategoryChart chart, String name, List<String> months, List<Double> values) {
+        if (values == null) return;
+        chart.addSeries(name, months, values);
     }
 
     // Opterecenje agenta u prethodnih 30 dana

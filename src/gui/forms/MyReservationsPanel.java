@@ -3,6 +3,7 @@ package gui.forms;
 import manager.ReservationManager;
 import manager.VehicleManager;
 import model.Client;
+import model.Rental;
 import model.Reservation;
 import model.VehicleModel;
 import model.enums.ReservationStatus;
@@ -13,6 +14,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
+import java.util.Optional;
 
 public class MyReservationsPanel extends JPanel {
 
@@ -40,7 +42,7 @@ public class MyReservationsPanel extends JPanel {
 
     private JPanel buildTable() {
         tableModel = new DefaultTableModel(
-                new Object[]{"Model vozila", "Od", "Do", "Status", "Dodatne usluge", "Cena"}, 0) {
+                new Object[]{"Model vozila", "Od", "Do", "Status", "Dodatne usluge", "Cena najma", "Kazna", "Ukupno"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -73,13 +75,22 @@ public class MyReservationsPanel extends JPanel {
 
         for (Reservation r : currentReservations) {
             VehicleModel model = vehicleManager.getModelById(r.getVehicleModelId()).orElse(null);
+
+            // kazne
+            Optional<Rental> rental = AppContext.getInstance().getRentalManager()
+                    .getRentalByReservationId(r.getId());
+            double lateFee = rental.map(Rental::getLateFee).orElse(0.0);
+            double total = r.getTotalPrice() + lateFee;
+
             tableModel.addRow(new Object[]{
                     model != null ? model.getFullName() : r.getVehicleModelId(),
                     DateUtil.format(r.getStartDate()),
                     DateUtil.format(r.getEndDate()),
                     translateStatus(r.getStatus()),
                     formatServiceNames(r.getAdditionalServiceIds()),
-                    String.format("%.2f RSD", r.getTotalPrice())
+                    String.format("%.2f RSD", r.getTotalPrice()),
+                    lateFee > 0 ? String.format("%.2f RSD", lateFee) : "-",
+                    String.format("%.2f RSD", total)
             });
         }
     }

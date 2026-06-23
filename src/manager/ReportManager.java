@@ -5,6 +5,7 @@ import model.enums.ReservationStatus;
 import repository.*;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -112,24 +113,70 @@ public class ReportManager {
         return new FinancialReport(subscriptionIncome, rentalIncome, lateFeesIncome, totalIncome, salaryExpense);
     }
 
-    public Map<String, Double> getRevenueByClientCategoryLastMonths(int months) {
-        LocalDate from = LocalDate.now().minusMonths(months);
-        Map<String, Double> result = new LinkedHashMap<>();
-
-        List<Reservation> reservations = reservationRepository.findAll().stream()
-                .filter(r -> r.getStatus() == ReservationStatus.CONFIRMED)
-                .filter(r -> r.getCreatedAt() != null && !r.getCreatedAt().toLocalDate().isBefore(from))
-                .toList();
-
-        for (Reservation r : reservations) {
-            User client = userRepository.findById(r.getClientId()).orElse(null);
-            String category = "BEZ KATEGORIJE";
-            if (client instanceof Client c && c.getCategory() != null) {
-                category = c.getCategory().name();
-            }
-            result.merge(category, r.getTotalPrice(), Double::sum);
+    public MonthlyRevenueReport getMonthlyRevenueByCategory(int months) {
+        List<YearMonth> timeline = new ArrayList<>();
+        YearMonth current = YearMonth.now();
+        for (int i = months - 1; i >= 0; i--) {
+            timeline.add(current.minusMonths(i));
         }
-        return result;
+        Map<YearMonth, Integer> indexOf = new HashMap<>();
+        for (int i = 0; i < timeline.size(); i++) {
+            indexOf.put(timeline.get(i), i);
+        }
+        List<String> monthLabels = timeline.stream().map(YearMonth::toString).collect(Collectors.toList());
+
+        List<String> categories = List.of("STUDENT", "PENSIONER", "COMPANY", "BEZ KATEGORIJE");
+        Map<String, List<Double>> revenuePerCategory = new LinkedHashMap<>();
+        for (String c : categories) {
+            revenuePerCategory.put(c, new ArrayList<>(Collections.nCopies(months, 0.0)));
+        }
+        List<Double> totalPerMonth = new ArrayList<>(Collections.nCopies(months, 0.0));
+
+        // 1) Najmovi + dodatne usluge iz potvrđenih rezervacija
+        for (Reservation r : reservationRepository.findAll()) {
+            if (r.getStatus() != ReservationStatus.CONFIRMED || r.getCreatedAt() == null) continue;
+            Integer idx = indexOf.get(YearMonth.from(r.getCreatedAt().toLocalDate()));
+            if (idx == null) continue;
+            accumulate(revenuePerCategory, totalPerMonth, categoryOfClient(r.getClientId()), idx, r.getTotalPrice());
+        }
+
+        // 2) Uplacene pretplate
+        for (Subscription s : subscriptionRepository.findAll()) {
+            if (s.getStartDate() == null) continue;
+            Integer idx = indexOf.get(YearMonth.from(s.getStartDate()));
+            if (idx == null) continue;
+            accumulate(revenuePerCategory, totalPerMonth, categoryOfClient(s.getClientId()), idx, s.getPaidAmount());
+        }
+
+        // 3) Naplacene kazne
+        for (Rental rental : rentalRepository.findAll()) {
+            if (rental.getActualReturnDate() == null || rental.getLateFee() <= 0) continue;
+            Integer idx = indexOf.get(YearMonth.from(rental.getActualReturnDate()));
+            if (idx == null) continue;
+            String category = reservationRepository.findById(rental.getReservationId())
+                    .map(res -> categoryOfClient(res.getClientId()))
+                    .orElse("BEZ KATEGORIJE");
+            accumulate(revenuePerCategory, totalPerMonth, category, idx, rental.getLateFee());
+        }
+
+        return new MonthlyRevenueReport(monthLabels, revenuePerCategory, totalPerMonth);
+    }
+
+    private void accumulate(Map<String, List<Double>> perCategory, List<Double> total,
+                             String category, int idx, double amount) {
+        List<Double> series = perCategory.get(category);
+        if (series != null) {
+            series.set(idx, series.get(idx) + amount);
+        }
+        total.set(idx, total.get(idx) + amount);
+    }
+
+    private String categoryOfClient(String clientId) {
+        User u = userRepository.findById(clientId).orElse(null);
+        if (u instanceof Client c && c.getCategory() != null) {
+            return c.getCategory().name();
+        }
+        return "BEZ KATEGORIJE";
     }
 
     public Map<String, Long> getAgentWorkloadLast30Days() {
@@ -162,6 +209,10 @@ public class ReportManager {
     // ---------------- pomocne klase za rezultate izvestaja ----------------
 
     public record VehicleModelReportRow(String modelName, String categoryId, long reservationCount, long rentalCount) {}
+
+    public record MonthlyRevenueReport(List<String> monthLabels,
+                                        Map<String, List<Double>> revenuePerCategory,
+                                        List<Double> totalPerMonth) {}
 
     public record FinancialReport(double subscriptionIncome, double rentalIncome, double lateFeesIncome,
                                    double totalIncome, double salaryExpense) {

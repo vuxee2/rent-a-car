@@ -58,16 +58,17 @@ public class AppContext {
 
         userManager = new UserManager(userRepository);
         vehicleManager = new VehicleManager(vehicleRepository, vehicleModelRepository, vehicleCategoryRepository);
-        reservationManager = new ReservationManager(reservationRepository, vehicleManager);
-        subscriptionManager = new SubscriptionManager(subscriptionRepository);
         pricelistManager = new PricelistManager(pricelistRepository);
+        subscriptionManager = new SubscriptionManager(subscriptionRepository, pricelistManager);
+        reservationManager = new ReservationManager(reservationRepository, vehicleManager, subscriptionManager);
         rentalManager = new RentalManager(rentalRepository, reservationRepository, vehicleManager, pricelistRepository);
         reportManager = new ReportManager(reservationRepository, rentalRepository, userRepository, vehicleModelRepository, subscriptionRepository);
 
         authService = new AuthService(userManager);
 
-        // Automatsko odbijanje isteklih rezervacija pri pokretanju aplikacije
+        // Automatsko odbijanje isteklih i otkazivanje nepreuzetih rezervacija pri pokretanju
         reservationManager.expireOverdueReservations();
+        rentalManager.expireNoShowReservations();
     }
 
     // Samo jedan thread moze da executuje

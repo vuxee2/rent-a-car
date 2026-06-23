@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/** Format reda: id;clientId;vehicleModelId;startDate;endDate;status;totalPrice;additionalServiceIds;createdAt;agentId */
+/** Format reda: id;clientId;vehicleModelId;startDate;endDate;status;totalPrice;additionalServiceIds;createdAt;agentId;cancelledAt */
 public class ReservationRepository {
 
     private static final String FILE_PATH = "data/reservations.csv";
@@ -30,7 +30,8 @@ public class ReservationRepository {
                         Double.parseDouble(row[6]),
                         row[7],
                         DateUtil.parseDateTime(row[8]),
-                        row.length > 9 ? row[9] : ""
+                        row.length > 9 ? row[9] : "",
+                        row.length > 10 ? DateUtil.parseDateTime(row[10]) : null
                 ));
             } catch (Exception e) {
                 System.err.println("Greska pri parsiranju rezervacije: " + String.join(DELIMITER, row));
@@ -84,7 +85,8 @@ public class ReservationRepository {
                 String.valueOf(r.getTotalPrice()),
                 r.getAdditionalServiceIds() == null ? "" : r.getAdditionalServiceIds(),
                 DateUtil.format(r.getCreatedAt()),
-                r.getAgentId() == null ? "" : r.getAgentId()
+                r.getAgentId() == null ? "" : r.getAgentId(),
+                DateUtil.format(r.getCancelledAt())
         };
     }
 }

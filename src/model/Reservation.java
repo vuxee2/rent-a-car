@@ -17,6 +17,7 @@ public class Reservation {
     private String additionalServiceIds;
     private LocalDateTime createdAt;
     private String agentId;
+    private LocalDateTime cancelledAt; // null dok nije otkazana
 
     public Reservation() {
     }
@@ -25,6 +26,14 @@ public class Reservation {
                         LocalDate startDate, LocalDate endDate, ReservationStatus status,
                         double totalPrice, String additionalServiceIds,
                         LocalDateTime createdAt, String agentId) {
+        this(id, clientId, vehicleModelId, startDate, endDate, status, totalPrice,
+                additionalServiceIds, createdAt, agentId, null);
+    }
+
+    public Reservation(String id, String clientId, String vehicleModelId,
+                        LocalDate startDate, LocalDate endDate, ReservationStatus status,
+                        double totalPrice, String additionalServiceIds,
+                        LocalDateTime createdAt, String agentId, LocalDateTime cancelledAt) {
         this.id = id;
         this.clientId = clientId;
         this.vehicleModelId = vehicleModelId;
@@ -35,6 +44,7 @@ public class Reservation {
         this.additionalServiceIds = additionalServiceIds;
         this.createdAt = createdAt;
         this.agentId = agentId;
+        this.cancelledAt = cancelledAt;
     }
 
     public String getId() { return id; }
@@ -66,4 +76,7 @@ public class Reservation {
 
     public String getAgentId() { return agentId; }
     public void setAgentId(String agentId) { this.agentId = agentId; }
+
+    public LocalDateTime getCancelledAt() { return cancelledAt; }
+    public void setCancelledAt(LocalDateTime cancelledAt) { this.cancelledAt = cancelledAt; }
 }

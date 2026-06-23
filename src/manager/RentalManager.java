@@ -10,6 +10,7 @@ import repository.RentalRepository;
 import repository.ReservationRepository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +35,17 @@ public class RentalManager {
 
     
     public Rental issueVehicle(String reservationId, String vehicleId, String agentId, int mileageAtPickup) {
+        return issueVehicle(reservationId, vehicleId, agentId, mileageAtPickup, "", 0.0, 0);
+    }
+
+    public Rental issueVehicle(String reservationId, String vehicleId, String agentId, int mileageAtPickup,
+                                String addedServiceIdsCsv, double addedServicesCost) {
+        return issueVehicle(reservationId, vehicleId, agentId, mileageAtPickup, addedServiceIdsCsv, addedServicesCost, 0);
+    }
+
+    /** Izdavanje vozila uz mogucnost da agent doda dodatne usluge u trenutku izdavanja. */
+    public Rental issueVehicle(String reservationId, String vehicleId, String agentId, int mileageAtPickup,
+                                String addedServiceIdsCsv, double addedServicesCost, int additionalDays) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new IllegalStateException("Rezervacija ne postoji."));
 
@@ -50,7 +62,29 @@ public class RentalManager {
             throw new IllegalStateException("Izabrano vozilo trenutno nije dostupno (status: " + vehicle.getStatus() + ").");
         }
 
-        // Status vozila -> RENTED, ne moze se ponovo izdati dok ne bude DOSTUPNO
+        boolean reservationChanged = false;
+
+        // Dodatne usluge koje agent dodaje pri izdavanju
+        if (addedServiceIdsCsv != null && !addedServiceIdsCsv.isBlank()) {
+            String existing = reservation.getAdditionalServiceIds();
+            String merged = (existing == null || existing.isBlank())
+                    ? addedServiceIdsCsv
+                    : existing + "," + addedServiceIdsCsv;
+            reservation.setAdditionalServiceIds(merged);
+            reservation.setTotalPrice(reservation.getTotalPrice() + addedServicesCost);
+            reservationChanged = true;
+        }
+
+        // Produzenje trajanja rezervacije (pomera datum vracanja)
+        if (additionalDays > 0) {
+            reservation.setEndDate(reservation.getEndDate().plusDays(additionalDays));
+            reservationChanged = true;
+        }
+
+        if (reservationChanged) {
+            reservationRepository.save(reservation);
+        }
+
         vehicleManager.setVehicleStatus(vehicle.getId(), VehicleStatus.RENTED);
 
         Rental rental = new Rental(
@@ -79,8 +113,6 @@ public class RentalManager {
         if (mileageAtReturn < rental.getMileageAtPickup()) {
             throw new IllegalStateException("Kilometraža pri vraćanju ne može biti manja od kilometraže pri preuzimanju.");
         }
-
-    //    AppContext.getInstance().getReservationRepository().delete(rental.getReservationId()); // ako se vrate kola brise se rezervacija
 
         double lateFee = calculateLateFee(rental, actualReturnDate);
 
@@ -138,5 +170,20 @@ public class RentalManager {
 
     public Optional<Rental> getRentalByReservationId(String reservationId) {
         return rentalRepository.findByReservationId(reservationId);
+    }
+
+    /** Rezervacije za koje se nije pojavio klijent postaju CANCELLED i klijentu se daje zabrana rezervisanja 24h */
+    public int expireNoShowReservations() {
+        int count = 0;
+        for (Reservation r : reservationRepository.findByStatus(ReservationStatus.CONFIRMED)) {
+            boolean notPickedUp = rentalRepository.findByReservationId(r.getId()).isEmpty();
+            if (notPickedUp && r.getStartDate() != null && r.getStartDate().isBefore(LocalDate.now())) {
+                r.setStatus(ReservationStatus.CANCELLED);
+                r.setCancelledAt(LocalDateTime.now());
+                reservationRepository.save(r);
+                count++;
+            }
+        }
+        return count;
     }
 }

@@ -72,8 +72,12 @@ public class VehicleManagementPanel extends JPanel {
                             + selected.getType().toString() + " (" + selected.getDailyPrice() + ")?",
                     "Potvrda brisanja", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
-                vehicleManager.deleteVehicleCategory(selected.getId());
-                refreshCategoriesTable();
+                try {
+                    vehicleManager.deleteVehicleCategory(selected.getId());
+                    refreshCategoriesTable();
+                } catch (IllegalStateException ex) {
+                    JOptionPane.showMessageDialog(this, ex.getMessage(), "Brisanje nije moguće", JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
 

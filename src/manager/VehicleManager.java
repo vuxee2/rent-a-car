@@ -92,6 +92,12 @@ public class VehicleManager {
     }
 
     public void deleteVehicleCategory(String id) {
+        boolean inUse = vehicleModelRepository.findAll().stream()
+                .anyMatch(m -> m.getCategoryId().equals(id));
+        if (inUse) {
+            throw new IllegalStateException(
+                    "Nije moguće obrisati kategoriju jer postoje modeli koji joj pripadaju. ");
+        }
         vehicleCategoryRepository.delete(id);
     }
 
