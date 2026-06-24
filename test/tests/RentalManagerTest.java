@@ -78,9 +78,9 @@ class RentalManagerTest {
     void dodatniDaniProduzavajuDatumVracanja() {
         LocalDate origEnd = end;
         Rental r = rentalMgr.issueVehicle("res1", "v1", "ag1", 1000, "", 0.0, 2);
-        // datum vraćanja rezervacije pomeren za 2 dana
+        // datum vracanja rezervacije pomeren za 2 dana
         assertEquals(origEnd.plusDays(2), rr.findById("res1").get().getEndDate());
-        // izdavanje beleži produženi očekivani povratak
+        // izdavanje belezi produzeni ocekivani povratak
         assertEquals(origEnd.plusDays(2), r.getExpectedReturnDate());
     }
 

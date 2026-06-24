@@ -1,12 +1,8 @@
 package tests;
 
 import model.*;
-import model.enums.ReservationStatus;
-import model.enums.SubscriptionStatus;
-import model.enums.VehicleStatus;
 import repository.*;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;

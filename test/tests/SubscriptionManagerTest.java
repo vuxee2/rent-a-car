@@ -26,7 +26,6 @@ class SubscriptionManagerTest {
 
     @Test
     void zahtevBezCenovnikaBacaJasnuGresku() {
-        // Regresija za pad pri pokretanju (problem #6): nema vise static initializer-a
         assertThrows(IllegalStateException.class, () -> sm.requestSubscription("cl1"));
     }
 
