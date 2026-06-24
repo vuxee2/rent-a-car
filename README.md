@@ -97,8 +97,9 @@ Aplikacija pokriva rad sa tri tipa korisnika (Administrator, Agent, Klijent), up
 
 ### Eclipse
 1. Importuj projekat: `File > Import > Existing Projects into Workspace`
-2. Dodaj XChart JAR na build path (`Project > Properties > Java Build Path > Libraries`) ako nije već dodat
-3. Pokreni gui.LoginFrame.java kao Java Application
+2. Ako Eclipse ne prepozna folder kao Java projekat, napravi novi Java projekat (`File > New > Java Project`) i poveži sa ovim.
+3. Dodaj XChart JAR na build path (`Project > Properties > Java Build Path > Libraries`) ako nije već dodat
+4. Pokreni `gui.LoginFrame` kao Java Application
 
 
 ## Testovi
